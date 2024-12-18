@@ -1,0 +1,293 @@
+<!-- Required dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Flip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.23/bundled/lenis.min.js"></script>
+
+<!-- Lenis initialization -->
+<script>
+let lenis = new Lenis({
+  lerp: 0.1,
+  wheelMultiplier: 1.4,
+  gestureOrientation: "vertical",
+  normalizeWheel: false,
+  smoothTouch: false
+});
+
+// Start Lenis in stopped state
+lenis.stop();
+
+function raf(time) {
+  lenis.raf(time);
+  requestAnimationFrame(raf);
+}
+requestAnimationFrame(raf);
+
+// Connect Lenis to ScrollTrigger
+lenis.on('scroll', ScrollTrigger.update);
+
+// Optional Lenis controls
+$("[data-lenis-start]").on("click", function () {
+  lenis.start();
+});
+
+$("[data-lenis-stop]").on("click", function () {
+  lenis.stop();
+});
+
+$("[data-lenis-toggle]").on("click", function () {
+  $(this).toggleClass("stop-scroll");
+  if ($(this).hasClass("stop-scroll")) {
+    lenis.stop();
+  } else {
+    lenis.start();
+  }
+});
+</script>
+
+<!-- Loading animation -->
+<script>
+gsap.registerPlugin(ScrollTrigger, Flip);
+
+function initLogoAnimation() {
+    // Disable scroll at start
+    document.body.style.overflow = 'hidden';
+    
+    const mainTL = gsap.timeline({
+        onStart() {
+            window.scrollTo(0, 0);
+        }
+    });
+
+    // Set initial states
+    gsap.set('.logo-part-1', {
+        scale: 10,
+        visibility: 'visible',
+        rotation: -45
+    });
+    
+    gsap.set('.logo-part-2', {
+        scale: 10,
+        visibility: 'visible',
+        rotation: 45
+    });
+    
+    // Initial animation
+    mainTL.to(['.logo-part-1', '.logo-part-2'], {
+        duration: 1.2,
+        top: '50%',
+        left: '50%',
+        xPercent: -50,
+        yPercent: -50,
+        scale: 1,
+        rotation: 0,
+        ease: 'power2.inOut'
+    });
+    
+    // Move to wrapper
+    mainTL.add(() => {
+        const state = Flip.getState(['.logo-part-1', '.logo-part-2']);
+        const wrapper = document.querySelector('.logo-wrapper');
+        wrapper.style.visibility = 'visible';
+        wrapper.appendChild(document.querySelector('.logo-part-1'));
+        wrapper.appendChild(document.querySelector('.logo-part-2'));
+        
+        return Flip.from(state, {
+            duration: 1.2,
+            spin: false,
+            ease: 'power3.inOut',
+            onComplete: () => {
+                gsap.set(['.logo-part-1', '.logo-part-2'], {
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    xPercent: 0,
+                    yPercent: 0,
+                    transform: 'none'
+                });
+            }
+        });
+    });
+    
+    // Logo spin
+    mainTL.to('.logo-wrapper', {
+        duration: 1.4,
+        rotation: 360,
+        ease: 'power2.inOut'
+    });
+
+    // Final position and cleanup
+    mainTL.add(() => {
+        const state = Flip.getState('.logo-wrapper');
+        const headerTarget = document.querySelector('.header_2_visual_wrap');
+        
+        gsap.set('.logo-wrapper', {
+            willChange: 'transform',
+            zIndex: 1000
+        });
+        
+        headerTarget.appendChild(document.querySelector('.logo-wrapper'));
+        
+        const finalTL = gsap.timeline();
+        
+        finalTL.add(
+            Flip.from(state, {
+                duration: 1.2,
+                ease: 'power3.inOut',
+                absolute: false
+            })
+        );
+
+        finalTL.to(".loading-wrapper", {
+            duration: 0.6,
+            backgroundColor: "rgba(0, 0, 0, 0)",
+            ease: "power3.inOut",
+            delay: 0.1
+        }, 0);
+
+        finalTL.add(() => {
+            gsap.set('.logo-wrapper', {
+                clearProps: 'all'
+            });
+            gsap.set(".loading-wrapper", { 
+                display: "none"
+            });
+            
+            // Enable scroll and start Lenis after animation
+            document.body.style.overflow = '';
+            lenis.start();
+        });
+
+        return finalTL;
+    });
+}
+
+// Initialize on load
+window.addEventListener('load', () => {
+    initLogoAnimation();
+});
+</script>
+<script>
+
+// Rotate and fade animation
+gsap.utils.toArray('.rotate-fade').forEach(element => {
+    gsap.from(element, {
+        scrollTrigger: {
+            trigger: element,
+            start: "top 80%",
+            toggleActions: "play none none reverse"
+        },
+        rotation: -45,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power2.out"
+    });
+});
+// Simple fade in
+gsap.utils.toArray('.fade-in').forEach(element => {
+   gsap.from(element, {
+       scrollTrigger: {
+           trigger: element,
+           start: "top 80%",
+           toggleActions: "play none none reverse"
+       },
+       opacity: 0,
+       duration: 0.8,
+       ease: "power2.out"
+   });
+});
+
+// Image scale and fade animation
+gsap.utils.toArray('.image-reveal').forEach(element => {
+   // Fade in the parent
+   gsap.from(element, {
+       scrollTrigger: {
+           trigger: element,
+           start: "top 80%",
+           toggleActions: "play none none reverse"
+       },
+       opacity: 0,
+       duration: 0.8,
+       ease: "power2.out"
+   });
+   
+   // Scale down the image
+   const img = element.querySelector('img');
+   if (img) {
+       gsap.from(img, {
+           scrollTrigger: {
+               trigger: element,
+               start: "top 80%",
+               toggleActions: "play none none reverse"
+           },
+           scale: 1.2,
+           duration: 1.4,
+           ease: "power2.out"
+       });
+   }
+});
+
+// Version 1 - Standard move up
+gsap.utils.toArray('.move-up').forEach(element => {
+   gsap.from(element, {
+       scrollTrigger: {
+           trigger: element,
+           start: "top 80%",
+           toggleActions: "play none none reverse"
+       },
+       y: 50,
+       opacity: 0,
+       duration: 0.8,
+       delay: 0.1,
+       ease: "power2.out"
+   });
+});
+
+// Version 1 - Standard move up
+gsap.utils.toArray('.move-up-1').forEach(element => {
+   gsap.from(element, {
+       scrollTrigger: {
+           trigger: element,
+           start: "top 80%",
+           toggleActions: "play none none reverse"
+       },
+       y: 50,
+       opacity: 0,
+       duration: 0.8,
+       delay: 0.1,
+       ease: "power2.out"
+   });
+});
+
+// Version 2 - Delayed by 0.1s
+gsap.utils.toArray('.move-up-2').forEach(element => {
+   gsap.from(element, {
+       scrollTrigger: {
+           trigger: element,
+           start: "top 80%",
+           toggleActions: "play none none reverse"
+       },
+       y: 50,
+       opacity: 0,
+       duration: 0.8,
+       delay: 0.2,
+       ease: "power2.out"
+   });
+});
+
+// Version 3 - Delayed by 0.2s
+gsap.utils.toArray('.move-up-3').forEach(element => {
+   gsap.from(element, {
+       scrollTrigger: {
+           trigger: element,
+           start: "top 80%",
+           toggleActions: "play none none reverse"
+       },
+       y: 50,
+       opacity: 0,
+       duration: 0.8,
+       delay: 0.3,
+       ease: "power2.out"
+   });
+});
+</script>
